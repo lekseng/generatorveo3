@@ -1,0 +1,276 @@
+import React, { useState } from 'react';
+import { FileText, PersonStanding, Smile, MapPin, Clock, Camera, Sun, Film, Heart, Music, MessageSquare, PlusCircle, Trash2, Clipboard, ClipboardCheck, Loader, Languages } from 'lucide-react';
+
+// --- Daftar Opsi untuk Prompt ---
+// Daftar ini tidak berubah, tetap sama seperti sebelumnya
+const waktuOptions = ["Matahari Terbit (Sunrise)", "Pagi Hari (Morning)", "Siang Hari (Midday)", "Sore Hari (Afternoon)", "Golden Hour", "Blue Hour", "Matahari Terbenam (Sunset)", "Senja (Twilight)", "Malam Hari (Night)"];
+const pencahayaanOptions = ["Pencahayaan Dramatis", "Cahaya Lembut (Soft Light)", "Cahaya Terang (Bright Light)", "Cahaya Remang (Dim Light)", "Siluet (Silhouette)", "Pencahayaan Sinematik", "Lampu Neon", "Cahaya Alami (Natural Light)", "Backlight"];
+const gayaVideoOptions = ["Fotorealistis", "Sinematik", "Anime", "Seni Fantasi", "Lukisan Minyak", "Surealis", "Steampunk", "Cyberpunk", "Vaporwave", "Seni Piksel", "Model 3D", "Gaya Ghibli", "Film Hitam Putih", "Film Vintage", "Low Poly", "Dokumenter"];
+const suasanaVideoOptions = ["Bahagia (Happy)", "Sedih (Sad)", "Misterius (Mysterious)", "Tegang (Tense)", "Tenang (Calm)", "Romantis (Romantic)", "Nostalgia (Nostalgic)", "Mencekam (Suspenseful)", "Megah (Epic)", "Aneh (Weird)"];
+const gerakanKameraOptions = [
+    { en: 'Static Shot', id: 'Tangkapan Statis' },
+    { en: 'Pan Left', id: 'Geser Kiri' },
+    { en: 'Pan Right', id: 'Geser Kanan' },
+    { en: 'Tilt Up', id: 'Dongak ke Atas' },
+    { en: 'Tilt Down', id: 'Tunduk ke Bawah' },
+    { en: 'Zoom In', id: 'Perbesar' },
+    { en: 'Zoom Out', id: 'Perkecil' },
+    { en: 'Dolly In', id: 'Dolly Masuk' },
+    { en: 'Dolly Out', id: 'Dolly Keluar' },
+    { en: 'Truck Left', id: 'Geser Kamera ke Kiri' },
+    { en: 'Truck Right', id: 'Geser Kamera ke Kanan' },
+    { en: 'Pedestal Up', id: 'Angkat Kamera ke Atas' },
+    { en: 'Pedestal Down', id: 'Turunkan Kamera ke Bawah' },
+    { en: 'Rotate Clockwise', id: 'Putar Searah Jarum Jam' },
+    { en: 'Rotate Counter-Clockwise', id: 'Putar Berlawanan Jarum Jam' },
+    { en: '3D Rotation', id: 'Rotasi 3D' },
+    { en: 'Boom Up', id: 'Boom ke Atas' },
+    { en: 'Boom Down', id: 'Boom ke Bawah' },
+    { en: 'Arc Left', id: 'Busur ke Kiri' },
+    { en: 'Arc Right', id: 'Busur ke Kanan' },
+    { en: 'Whip Pan', id: 'Whip Pan' },
+    { en: 'Crane Shot', id: 'Tangkapan Derek' },
+    { en: 'Handheld', id: 'Genggam Tangan' },
+    { en: 'Drone Shot', id: 'Tangkapan Drone' },
+    { en: 'First-Person View (FPV)', id: 'Sudut Pandang Orang Pertama' }
+];
+
+
+// --- Komponen Pembantu ---
+const Section = ({ title, icon, children }) => (
+  <div className="bg-gray-800/50 backdrop-blur-sm p-4 rounded-2xl border border-gray-700 shadow-lg h-full flex flex-col">
+    <div className="flex items-center mb-3">
+      {icon}
+      <h2 className="text-md sm:text-lg font-semibold ml-3 text-white">{title}</h2>
+    </div>
+    <div className="flex-grow">{children}</div>
+  </div>
+);
+
+const OptionButton = ({ label, isSelected, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-500 transform hover:scale-105 ${
+      isSelected 
+        ? 'bg-blue-600 text-white shadow-md' 
+        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+    }`}
+  >
+    {label}
+  </button>
+);
+
+const TextInput = ({ value, onChange, placeholder }) => (
+    <input
+        type="text"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full p-2.5 bg-gray-700/50 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition text-sm"
+    />
+);
+
+// --- Komponen Utama Aplikasi ---
+export default function App() {
+  // State untuk 12 input (tidak ada perubahan logika)
+  const [subjek, setSubjek] = useState('');
+  const [aksi, setAksi] = useState('');
+  const [ekspresi, setEkspresi] = useState('');
+  const [tempat, setTempat] = useState('');
+  const [suaraMusik, setSuaraMusik] = useState('');
+  const [kalimatDiucapkan, setKalimatDiucapkan] = useState('');
+  const [detailTambahan, setDetailTambahan] = useState('');
+  
+  const [waktu, setWaktu] = useState([]);
+  const [gerakanKamera, setGerakanKamera] = useState([]);
+  const [pencahayaan, setPencahayaan] = useState([]);
+  const [gayaVideo, setGayaVideo] = useState([]);
+  const [suasanaVideo, setSuasanaVideo] = useState([]);
+
+  // State untuk hasil prompt dan status (tidak ada perubahan logika)
+  const [promptIndonesia, setPromptIndonesia] = useState('');
+  const [promptInggris, setPromptInggris] = useState('');
+  const [isCopied, setIsCopied] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Fungsi toggle pilihan (tidak ada perubahan logika)
+  const toggleSelection = (item, list, setter) => {
+    setter(list.includes(item) ? list.filter(i => i !== item) : [...list, item]);
+  };
+
+  // Fungsi untuk mereset semua input (tidak ada perubahan logika)
+  const handleReset = () => {
+    setSubjek(''); setAksi(''); setEkspresi(''); setTempat('');
+    setSuaraMusik(''); setKalimatDiucapkan(''); setDetailTambahan('');
+    setWaktu([]); setGerakanKamera([]); setPencahayaan([]);
+    setGayaVideo([]); setSuasanaVideo([]);
+    setPromptIndonesia(''); setPromptInggris(''); setIsCopied(false);
+  };
+  
+  // Fungsi untuk menyusun prompt naratif dan menerjemahkan (tidak ada perubahan logika)
+  const handleGeneratePrompt = async () => {
+    if (!subjek || !aksi) {
+      // Mengganti alert() dengan dialog modal akan lebih baik untuk app mobile,
+      // namun untuk menjaga kompatibilitas, alert() tetap digunakan.
+      alert("Kolom 'Subjek' dan 'Aksi' wajib diisi.");
+      return;
+    }
+    setIsGenerating(true);
+
+    let narasi = `Sebuah video sinematik yang menampilkan ${subjek} sedang ${aksi}.`;
+    if (ekspresi) narasi += ` Wajahnya menunjukkan ekspresi ${ekspresi}.`;
+    if (tempat) narasi += ` Adegan ini berlatar di ${tempat}.`;
+    if (waktu.length > 0) narasi += ` Waktu dalam video adalah ${waktu.join(', ')}.`;
+    if (pencahayaan.length > 0) narasi += ` Pencahayaan video menggunakan gaya ${pencahayaan.join(', ')} untuk menciptakan atmosfer yang kuat.`;
+    if (suasanaVideo.length > 0) narasi += ` Suasana keseluruhan video terasa ${suasanaVideo.join(' dan ')}.`;
+    if (gerakanKamera.length > 0) narasi += ` Gerakan kamera yang dominan adalah ${gerakanKamera.map(g => g.en).join(', ')}.`;
+    if (suaraMusik) narasi += ` Terdengar suara latar berupa ${suaraMusik}.`;
+    if (kalimatDiucapkan) narasi += ` Salah satu karakter terdengar mengucapkan, "${kalimatDiucapkan}".`;
+    
+    let promptFinalID = narasi;
+    let modifiers = [
+        ...gayaVideo, 
+        ...(detailTambahan ? detailTambahan.split(',').map(s => s.trim()) : [])
+    ];
+    if (modifiers.length > 0) {
+        promptFinalID += ` Detail dan gaya visual: ${modifiers.join(', ')}.`;
+    }
+    setPromptIndonesia(promptFinalID);
+
+    try {
+        const translationPrompt = `Translate the following Indonesian text to a fluent, high-quality English prompt for a video generation AI. The final output must be only the English translation. Do not translate the part inside the quotation marks that follows "Salah satu karakter terdengar mengucapkan,".
+        
+Indonesian Text: "${promptFinalID}"`;
+        
+        let chatHistory = [{ role: "user", parts: [{ text: translationPrompt }] }];
+        const payload = { contents: chatHistory };
+        const apiKey = ""; // API key akan di-provide oleh environment
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+
+        const result = await response.json();
+        const translatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (translatedText) {
+            setPromptInggris(translatedText);
+        } else {
+            setPromptInggris("Translation failed. Please try again.");
+            console.error("Translation API response was empty or malformed:", result);
+        }
+    } catch (error) {
+        console.error("Error during translation:", error);
+        setPromptInggris("Error during translation. Check console for details.");
+    } finally {
+        setIsGenerating(false);
+    }
+  };
+
+  const handleCopyPrompt = () => {
+    if (!promptInggris) return;
+    const textArea = document.createElement("textarea");
+    textArea.value = promptInggris;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+        console.error("Failed to copy: ", err);
+    }
+    document.body.removeChild(textArea);
+  };
+
+  return (
+    // Mengubah padding untuk tampilan mobile yang lebih baik
+    <div className="bg-gray-900 text-white min-h-screen font-sans flex items-center justify-center p-3 sm:p-4">
+      <div className="w-full max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        
+        <div className="text-center">
+          {/* PERUBAHAN: Ukuran font dioptimalkan untuk mobile */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+            Advanced Veo Prompt Generator
+          </h1>
+          <p className="text-gray-400 mt-2 text-base sm:text-lg">
+            Bangun prompt video yang kompleks dengan struktur terperinci.
+          </p>
+        </div>
+        
+        {/* Grid ini secara natural akan menjadi 1 kolom di mobile (Android) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Section title="Subjek" icon={<PersonStanding className="text-blue-300"/>}><TextInput value={subjek} onChange={e=>setSubjek(e.target.value)} placeholder="Contoh: astronot, kucing"/> </Section>
+            <Section title="Aksi" icon={<FileText className="text-blue-300"/>}><TextInput value={aksi} onChange={e=>setAksi(e.target.value)} placeholder="Contoh: menari, membaca buku"/> </Section>
+            <Section title="Ekspresi" icon={<Smile className="text-blue-300"/>}><TextInput value={ekspresi} onChange={e=>setEkspresi(e.target.value)} placeholder="Contoh: gembira, terkejut"/> </Section>
+            <Section title="Tempat / Latar" icon={<MapPin className="text-green-300"/>}><TextInput value={tempat} onChange={e=>setTempat(e.target.value)} placeholder="Contoh: di Mars, perpustakaan kuno"/> </Section>
+            <Section title="Waktu" icon={<Clock className="text-green-300"/>}>
+                <div className="flex flex-wrap gap-2">{waktuOptions.map(o => <OptionButton key={o} label={o} isSelected={waktu.includes(o)} onClick={()=>toggleSelection(o, waktu, setWaktu)}/>)}</div>
+            </Section>
+            <Section title="Gerakan Kamera" icon={<Camera className="text-yellow-300"/>}>
+                {/* PERUBAHAN: max-h lebih kecil untuk mobile, dan touch-auto untuk scrolling yang lebih baik */}
+                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto touch-auto">{gerakanKameraOptions.map(o => <OptionButton key={o.en} label={`${o.en} (${o.id})`} isSelected={gerakanKamera.some(s => s.en === o.en)} onClick={()=>toggleSelection(o, gerakanKamera, setGerakanKamera)}/>)}</div>
+            </Section>
+            <Section title="Pencahayaan" icon={<Sun className="text-orange-300"/>}>
+                <div className="flex flex-wrap gap-2">{pencahayaanOptions.map(o => <OptionButton key={o} label={o} isSelected={pencahayaan.includes(o)} onClick={()=>toggleSelection(o, pencahayaan, setPencahayaan)}/>)}</div>
+            </Section>
+            <Section title="Gaya Video" icon={<Film className="text-purple-300"/>}>
+                <div className="flex flex-wrap gap-2">{gayaVideoOptions.map(o => <OptionButton key={o} label={o} isSelected={gayaVideo.includes(o)} onClick={()=>toggleSelection(o, gayaVideo, setGayaVideo)}/>)}</div>
+            </Section>
+            <Section title="Suasana Video" icon={<Heart className="text-red-300"/>}>
+                <div className="flex flex-wrap gap-2">{suasanaVideoOptions.map(o => <OptionButton key={o} label={o} isSelected={suasanaVideo.includes(o)} onClick={()=>toggleSelection(o, suasanaVideo, setSuasanaVideo)}/>)}</div>
+            </Section>
+            <Section title="Suara / Musik" icon={<Music className="text-pink-300"/>}><TextInput value={suaraMusik} onChange={e=>setSuaraMusik(e.target.value)} placeholder="Contoh: musik lo-fi, suara hujan"/> </Section>
+            <Section title="Kalimat yang Diucapkan" icon={<MessageSquare className="text-teal-300"/>}><TextInput value={kalimatDiucapkan} onChange={e=>setKalimatDiucapkan(e.target.value)} placeholder="Contoh: Aku akan kembali"/> </Section>
+            <Section title="Detail Tambahan" icon={<PlusCircle className="text-gray-300"/>}><TextInput value={detailTambahan} onChange={e=>setDetailTambahan(e.target.value)} placeholder="Pisahkan dengan koma: 8K, detail tinggi"/> </Section>
+        </div>
+        
+        {/* Tombol-tombol ini sudah diatur untuk menjadi full-width di mobile */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <button onClick={handleGeneratePrompt} disabled={isGenerating} className="w-full sm:w-auto px-8 py-3 text-base sm:text-lg font-bold text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+            {isGenerating ? <><Loader className="animate-spin mr-2"/> Menerjemahkan...</> : 'Buat & Terjemahkan Prompt'}
+          </button>
+           <button onClick={handleReset} className="w-full sm:w-auto flex items-center justify-center px-6 py-3 font-semibold text-gray-300 bg-gray-700 rounded-full hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500">
+            <Trash2 size={18} className="mr-2"/> Hapus Semua
+          </button>
+        </div>
+
+        {(promptIndonesia || isGenerating) && (
+          <div className="mt-4 bg-gray-800/60 p-4 rounded-2xl border border-gray-700 animate-fade-in">
+            <h3 className="text-lg sm:text-xl font-semibold mb-4 text-white">Hasil Prompt</h3>
+            {/* Grid ini juga akan menjadi 1 kolom di mobile */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                    <label className="flex items-center text-base sm:text-lg font-medium text-gray-300 mb-2">
+                        <span className="w-6 h-6 mr-2 rounded-full bg-red-200 text-red-800 flex items-center justify-center text-xs sm:text-sm font-bold">ID</span> Prompt (Dapat Diedit)
+                    </label>
+                    {/* PERUBAHAN: tinggi textarea dikurangi untuk mobile */}
+                    <textarea value={promptIndonesia} onChange={e=>setPromptIndonesia(e.target.value)} className="w-full h-40 sm:h-48 p-3 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition font-mono text-xs sm:text-sm text-gray-200"></textarea>
+                </div>
+                <div>
+                    <label className="flex items-center text-base sm:text-lg font-medium text-gray-300 mb-2">
+                        <span className="w-6 h-6 mr-2 rounded-full bg-blue-200 text-blue-800 flex items-center justify-center text-xs sm:text-sm font-bold">EN</span> Final Prompt (Salin Ini)
+                    </label>
+                    <div className="relative">
+                        <textarea value={promptInggris} readOnly className="w-full h-40 sm:h-48 p-3 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none transition font-mono text-xs sm:text-sm text-lime-300"></textarea>
+                        <button onClick={handleCopyPrompt} className="absolute top-2 right-2 p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors" title="Salin Prompt Bahasa Inggris">
+                            {isCopied ? <ClipboardCheck className="text-green-400" /> : <Clipboard className="text-gray-400" />}
+                        </button>
+                    </div>
+                </div>
+            </div>
+          </div>
+        )}
+        
+      </div>
+    </div>
+  );
+}
